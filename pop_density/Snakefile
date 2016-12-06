@@ -1,0 +1,49 @@
+import glob
+import os
+
+rule all:
+  input:
+    dataset="data/pop_density/pop_density_v5.tif",
+    readme="data/pop_density/README.pdf"
+
+# Rule to translate all rasters using compression. Rename the files at the same
+# time.
+rule copy:
+    input:
+        dataset="data/org/popu01clcv5.tif",
+        readme="data/org/population-density-disaggregated-with-corine-land-cover-2000-2.pdf"
+    output:
+        dataset=rules.all.input.dataset,
+        readme=rules.all.input.readme
+    log:
+        "log/copy.log"
+    message: "Translating files {input}"
+    run:
+        # Clean the log
+        shell('echo "" > {0} 2>&1'.format(log))
+        # The output directory needs to be manually created if it doesn't exist
+        outdir = os.path.dirname(output.dataset)
+        shell("mkdir -p {outdir}")
+
+        # Copy file, no need to translate (is already using LZW compression)
+        shell('echo "Copying {0} to {1}" >> {2} 2>&1'.format(input.dataset, output.dataset, log))
+        shell("cp '{0}' '{1}' >> {2} 2>&1".format(input.dataset, output.dataset, log))
+        # Copy README pdf
+        shell('echo "Copying {0} to {1}" >> {2} 2>&1'.format(input.readme, output.readme, log))
+        shell("cp '{0}' '{1}' >> {2} 2>&1".format(input.readme, output.readme, log))
+
+# Rule to create datapackage metadata for the resources
+rule create_metadata:
+    params:
+        # This Google spreadsheet holds metadata for PGs datasets.
+        gspread_uri="https://docs.google.com/spreadsheets/d/1MmWfJWktF33SMscCfUzE-GhYj1X0M4HB3FOF9IbHPjk/edit?usp=sharing",
+        gpsread_spreadsheet_name="EG-dmp",
+        gpsread_worksheet_name="datasets",
+        gpsread_credentials="scripts/secret-EGpackager-4b30d0d339ed.json"
+    input:
+        rules.copy.output,
+        rerefence_raster="data/wood_productions_maps/woodprod_average.tif"
+    output:
+        "data/datapackage.json"
+    script:
+        "scripts/create_metadata.py"
