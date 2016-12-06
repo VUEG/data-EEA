@@ -8,12 +8,12 @@ Raster data on population density using Corine Land Cover 2000 inventory.
 
 Due to the user interface at EEA website, automated retrieval is not possible. Hence all data have been downloaded manually.
 
-resources: `data/org`
-retrieved_from: http://www.eea.europa.eu/data-and-maps/data/population-density-disaggregated-with-corine-land-cover-2000-2
-retrieved_date: 2016-12-05
-retrieved_by: Joona Lehtomäki <joona.lehtomaki@gmail.com>
-modified_date: 2016-12-06
-modified_by: Joona Lehtomäki <joona.lehtomaki@gmail.com>
+resources: `data/org`  
+retrieved_from: http://www.eea.europa.eu/data-and-maps/data/population-density-disaggregated-with-corine-land-cover-2000-2  
+retrieved_date: 2016-12-05  
+retrieved_by: Joona Lehtomäki <joona.lehtomaki@gmail.com>  
+modified_date: 2016-12-06  
+modified_by: Joona Lehtomäki <joona.lehtomaki@gmail.com>  
 
 ### Folder structure and processing
 
@@ -26,7 +26,7 @@ The files in sub-directory `org` are as they have been received from EEA. Folder
 
 1. Copy and rename dataset and README file
 
-See [Snakemake file](https://github.com/VUEG/data-UDR/blob/master/european_tetrapods/Snakefile) for details.
+See [Snakemake file](https://github.com/VUEG/data-EEA/blob/master/pop_density/Snakefile) for details.
 
 ### Metadata
 
