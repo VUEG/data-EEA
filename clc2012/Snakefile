@@ -1,0 +1,84 @@
+import glob
+import os
+
+rule all:
+  input:
+    datasets=["data/clc_2012/g100_clc12_V18_5.tif",
+              "data/clc_2012/g250_clc12_V18_5.tif"],
+    readmes=["data/clc_2012/readme_V18_5_raster_100m.txt",
+             "data/clc_2012/readme_V18_5_raster_250m.txt",
+             "data/clc_2012/readme_V18_5.txt"],
+    legend="data/clc_2012/legend"
+
+
+rule extract:
+    input:
+        "data/org/g100_clc12_V18_5a.zip",
+        "data/org/g250_clc12_V18_5a.zip"
+    output:
+        temp("data/org/g100_clc12_V18_5a"),
+        temp("data/org/g250_clc12_V18_5a")
+    log:
+        "log/extract.log"
+    run:
+        for zip_file, out_dir in zip(input, output):
+            shell("unzip -o {} -d {} >& {}".format(zip_file, out_dir, log))
+
+# Rule to translate all rasters using compression. Rename the files at the same
+# time.
+rule copy:
+    input:
+        dirs=rules.extract.output
+    output:
+        datasets=rules.all.input.datasets,
+        readmes=rules.all.input.readmes,
+        legend=rules.all.input.legend
+    log:
+        "log/copy.log"
+    message: "Copying files {input}"
+    run:
+        # Clean the log
+        shell('echo "" > {0} 2>&1'.format(log))
+        for input_dir, output_dataset in zip(input.dirs, output.datasets):
+            # The output directory needs to be manually created if it doesn't
+            # exist
+            outdir = os.path.dirname(output_dataset)
+            shell("mkdir -p {outdir}")
+
+            # Copy file, no need to translate (is already using packbits
+            # compression)
+            input_dataset = os.path.join(input_dir,
+                                         os.path.basename(output_dataset))
+            shell('echo "Copying {0} to {1}" >> {2} 2>&1'.format(input_dataset,
+                                                                 output_dataset,
+                                                                 log))
+            shell("cp '{0}' '{1}' >> {2} 2>&1".format(input_dataset,
+                                                      output_dataset,
+                                                      log))
+        # Copy READMEs
+        for input_dir, readme in zip(input.dirs, output.readmes):
+            input_readme = os.path.join(input_dir,
+                                         os.path.basename(readme))
+            shell('echo "Copying {0} to {1}" >> {2} 2>&1'.format(input_readme,
+                                                                 readme, log))
+            shell("cp '{0}' '{1}' >> {2} 2>&1".format(input_readme,
+                                                      readme, log))
+
+        # HACK! Manual Copy
+        input_readme = os.path.join(input[0], os.path.basename(output.readmes[2]))
+        output_readme = output.readmes[2]
+        shell('echo "Copying {0} to {1}" >> {2} 2>&1'.format(input_readme,
+                                                             output_readme,
+                                                             log))
+        shell("cp '{0}' '{1}' >> {2} 2>&1".format(input_readme,
+                                                  output_readme,
+                                                  log))
+
+        # Copy legend files
+        input_legend = os.path.join(input[0], 'Legend')
+        shell('echo "Copying {0} to {1}" >> {2} 2>&1'.format(input_legend,
+                                                             output.legend,
+                                                             log))
+        shell("cp -r '{0}' '{1}' >> {2} 2>&1".format(input_legend,
+                                                     output.legend,
+                                                     log))
